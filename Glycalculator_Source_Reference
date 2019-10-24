@@ -1,1 +1,153 @@
 
+package com.example.glycemicalc;
+
+import androidx.appcompat.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.*;
+import android.widget.*;
+
+
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+
+    //methods
+
+
+    EditText ET_weight;
+    EditText ET_recent_bs;
+    EditText ET_sugars;
+    EditText ET_carbs;
+    Button B_calculate;
+    String text;
+
+    TextView TV_prompt1;
+    TextView TV_prompt2;
+    TextView TV_prompt3;
+    TextView TV_carb_contrib;
+    TextView TV_sugar_contrib;
+    TextView TV_recommended;
+    TextView TV_shown_work;
+    TextView TV_overall_contrib;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        ET_weight = findViewById(R.id.weight);
+        ET_recent_bs = findViewById(R.id.recent_bs);
+        ET_carbs = findViewById(R.id.carbs);
+        ET_sugars = findViewById(R.id.sugars);
+
+        B_calculate = findViewById(R.id.calculate);
+
+        TV_carb_contrib = findViewById(R.id.carb_contrib);
+        TV_sugar_contrib = findViewById(R.id.sugar_contrib);
+        TV_overall_contrib = findViewById(R.id.overall_contrib);
+        TV_recommended = findViewById(R.id.recommended);
+        TV_shown_work = findViewById(R.id.shown_work);
+
+        B_calculate.setOnClickListener(this);
+    }
+
+
+    @Override
+    public void onClick(View v) {
+        if(v.getId()==B_calculate.getId()){
+
+            //WEIGHT - Used in calc, not displayed
+            //SUGARS - used in calc
+            //RECENTBS - used in calc
+            //CARBS - used in calc
+            //SUGAR CONTRIB = minor calc
+            //CARB CONTRIB = minor calc
+            //DOSE = result of calc
+
+            //TV_recommended.setText(ET_weight.getText());
+            //EACH TV goes with an ET
+
+            //The only TV's are Recommended, Sugarcontrib, carbscontrib, and workshown.
+
+            //TV_recommended.setText( calculation result );
+            //TV_sugar_contrib.setText( small calc result );
+            //TV_carbs_contrib.setText( small calc result );
+            //TV_workshown.setText( idk find a way to display algorithms used )
+            //ET_valuesalrdy    TV_
+
+            int g_mg_increase = get_glucose_contrib(Integer.parseInt(ET_sugars.getText().toString()),
+                                                    Integer.parseInt(ET_weight.getText().toString()));
+
+            int c_mg_increase = get_carbs_contrib(Integer.parseInt(ET_carbs.getText().toString()),
+                                                    Integer.parseInt(ET_weight.getText().toString()));
+
+            int overall_mg_increase = get_overall_increase(g_mg_increase, c_mg_increase);
+
+            int insulin_amt = get_insulin_unit_amt_from_next_meal(overall_mg_increase,
+                                                Integer.parseInt(ET_recent_bs.getText().toString()));
+
+            String myWork = "Weight -> Matched..\nRecent BS Considered..\n(XCarbs * weight%switch_C)\n + (XSugars * weight%switch_G)\n = Meal unit Contribution";
+            TV_recommended.setText(  String.valueOf(insulin_amt)  );
+            TV_sugar_contrib.setText( String.valueOf(g_mg_increase) );
+            TV_carb_contrib.setText( String.valueOf(c_mg_increase) );
+            TV_overall_contrib.setText(String.valueOf(get_overall_increase(g_mg_increase, c_mg_increase)));
+            TV_shown_work.setText(myWork);
+
+        }
+    }
+
+
+    int get_insulin_unit_amt_from_next_meal(int overall_mg_increase, int recent_BS){
+        if (recent_BS >= 140)
+            if (overall_mg_increase >= 50 && overall_mg_increase <= 70) return 3;
+            else if (overall_mg_increase >=71 && overall_mg_increase <= 90) return 5;
+            else if (overall_mg_increase >=91 && overall_mg_increase <= 110) return 6;
+            else if (overall_mg_increase >=111 && overall_mg_increase <= 130) return 7;
+            else if (overall_mg_increase >=131 && overall_mg_increase <= 150) return 8;
+            else if (overall_mg_increase >=151 && overall_mg_increase <= 180) return 10;
+            else if (overall_mg_increase >=181 && overall_mg_increase <= 210) return 12;
+            else if (overall_mg_increase >=211 && overall_mg_increase <= 240) return 14;
+            else if (overall_mg_increase >=241 && overall_mg_increase <= 280) return 16;
+        return -1;
+    }
+
+    int get_glucose_contrib(int glucose_consumed, int weight)
+    {
+        double result = (glucose_consumed) * (get_g_mg_modifier(weight));
+        return (int)result;
+    }
+
+
+    int get_carbs_contrib(int carbs_consumed, int weight)
+    {
+        double result = (carbs_consumed) * (get_c_mg_modifier(weight));
+        return (int)result;
+    }
+
+    int get_overall_increase(int glucose_contrib, int carbs_contrib)
+    {
+        double result = (glucose_contrib) + (carbs_contrib);
+        return (int)result;
+    }
+
+
+    double get_g_mg_modifier(int weight){
+    if      (weight >= 35 && weight <= 70) return 9.0;
+    else if (weight >= 71 && weight <= 105) return 7.0;
+    else if (weight >= 106 && weight <= 140) return 5.5;
+    else if (weight >= 141 && weight <= 175) return 4.35;
+    else if (weight >= 176 && weight <= 210) return 3.7;
+    else if (weight >= 211 && weight <= 245) return 3.1;
+    return -1;
+    }
+
+    double get_c_mg_modifier(int weight){
+    if      (weight >= 45 && weight <= 60) return 8.0;
+    else if (weight >= 61 && weight <= 100) return 5.0;
+    else if (weight >= 101 && weight <= 170) return 4.0;
+    else if (weight >= 171 && weight <= 230) return 3.0;
+    else if (weight >= 231 && weight <= 280) return 1.5;
+    return -1;
+    }
+
+
+}
